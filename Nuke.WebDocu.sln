@@ -11,7 +11,15 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{E97AC891-538
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{74FC12C1-4FDF-4422-B7CF-8DC147F3D752}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nuke.WebDocu.Tests", "test\Nuke.WebDocu.Tests\Nuke.WebDocu.Tests.csproj", "{967664F8-F51C-4B5D-896B-0B9434265734}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nuke.WebDocu.Tests", "test\Nuke.WebDocu.Tests\Nuke.WebDocu.Tests.csproj", "{967664F8-F51C-4B5D-896B-0B9434265734}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{91E7437C-99B7-4288-B59A-28D3AFD67616}"
+	ProjectSection(SolutionItems) = preProject
+		docfx.json = docfx.json
+		LICENSE.md = LICENSE.md
+		README.md = README.md
+		toc.yml = toc.yml
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
