@@ -4,6 +4,8 @@ using System.IO;
 using System.IO.Compression;
 using System.Net.Http;
 using System.Threading.Tasks;
+using Nuke.Core.BuildServers;
+using static Nuke.Core.IO.PathConstruction;
 
 namespace Nuke.WebDocu
 {
@@ -16,6 +18,7 @@ namespace Nuke.WebDocu
             // Create zip package
             var tempPath = Path.GetTempFileName();
             File.Delete(tempPath);
+            FixGitUrlsIfInJenkinsJob(settings.SourceDirectory);
             ZipFile.CreateFromDirectory(settings.SourceDirectory, tempPath);
 
             // Upload package to docs
@@ -49,6 +52,27 @@ namespace Nuke.WebDocu
                 {
                     throw new Exception("Upload failed");
                 }
+            }
+        }
+
+        static void FixGitUrlsIfInJenkinsJob(string sourceDirectory)
+        {
+            var jenkinsInstance = Jenkins.Instance;
+            if (jenkinsInstance == null)
+            {
+                return;
+            }
+
+            // In Jenkins, the Git branch is something like "origin/dev", which should
+            // only be "dev" to generate correct urls.
+            // It's just replaced by the actual commit hash as to preserve the version context
+
+            foreach (var htmlFile in GlobFiles(sourceDirectory, "**/*.html"))
+            {
+                var originalContent = File.ReadAllText(htmlFile);
+                var correctedText = originalContent.Replace($"blob/{jenkinsInstance.GitBranch}",
+                    $"blob/{jenkinsInstance.GitCommit}");
+                File.WriteAllText(htmlFile, correctedText);
             }
         }
     }
