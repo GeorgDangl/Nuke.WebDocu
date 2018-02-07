@@ -104,9 +104,17 @@ class Build : NukeBuild
     Target BuildDocumentation => _ => _
             .DependsOn(Clean)
             .DependsOn(BuildDocFxMetadata)
-            .Executes(() => DocFxBuild(DocFxFile, s => s
+            .Executes(() =>
+        {
+            // Using README.md as index.md
+            File.Copy(SolutionDirectory / "README.md", SolutionDirectory / "index.md");
+
+            DocFxBuild(DocFxFile, s => s
                 .ClearXRefMaps()
-                .SetLogLevel(DocFxLogLevel.Verbose)));
+                .SetLogLevel(DocFxLogLevel.Verbose));
+
+            File.Delete(SolutionDirectory / "index.md");
+        });
 
     Target UploadDocumentation => _ => _
             .DependsOn(Push) // To have a relation between pushed package version and published docs version
