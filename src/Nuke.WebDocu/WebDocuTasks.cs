@@ -75,7 +75,7 @@ namespace Nuke.WebDocu
                 var originalContent = File.ReadAllText(htmlFile);
                 var correctedText = originalContent
                     .Replace($"blob/{jenkinsInstance.GitBranch}", $"blob/{jenkinsInstance.GitCommit}")
-                    .Replace($"blob/{jenkinsInstance.GitBranch}", $"blob/heads/{jenkinsInstance.GitCommit}");
+                    .Replace($"blob/heads/{jenkinsInstance.GitBranch}", $"blob/{jenkinsInstance.GitCommit}");
                 File.WriteAllText(htmlFile, correctedText);
             }
         }
