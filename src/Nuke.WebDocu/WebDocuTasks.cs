@@ -70,8 +70,9 @@ namespace Nuke.WebDocu
             foreach (var htmlFile in GlobFiles(sourceDirectory, "**/*.html"))
             {
                 var originalContent = File.ReadAllText(htmlFile);
-                var correctedText = originalContent.Replace($"blob/{jenkinsInstance.GitBranch}",
-                    $"blob/{jenkinsInstance.GitCommit}");
+                var correctedText = originalContent
+                    .Replace($"blob/{jenkinsInstance.GitBranch}", $"blob/{jenkinsInstance.GitCommit}")
+                    .Replace($"blob/{jenkinsInstance.GitBranch}", $"blob/heads/{jenkinsInstance.GitCommit}");
                 File.WriteAllText(htmlFile, correctedText);
             }
         }
