@@ -3,25 +3,18 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <Description>Deploy to WebDocu with NUKE Build</Description>
-    <VersionPrefix>1.0.0</VersionPrefix>
-    <VersionSuffix Condition=" '$(GIT_BRANCH)' == 'origin/dev'">build-$(BUILD_NUMBER)</VersionSuffix>
     <Authors>Georg Dangl</Authors>
-    <GeneratePackageOnBuild Condition="'$(Configuration)'=='Release'">True</GeneratePackageOnBuild>
     <Copyright>(c) $([System.DateTime]::Now.Year) Georg Dangl</Copyright>
     <AssemblyName>Nuke.WebDocu</AssemblyName>
     <PackageProjectUrl>https://github.com/GeorgDangl/Nuke.WebDocu</PackageProjectUrl>
     <RepositoryUrl>https://github.com/GeorgDangl/Nuke.WebDocu.git</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageId>Nuke.WebDocu</PackageId>
-    <PackageReleaseNotes>
-      1.0.0:
-      Initial Release
-    </PackageReleaseNotes>
     <PackageIconUrl>https://blog.dangl.me/media/1114/gd_icon_256.png</PackageIconUrl>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Nuke.Common" Version="0.1.458" />
+    <PackageReference Include="Nuke.Common" Version="0.2.0" />
   </ItemGroup>
   
 </Project>
