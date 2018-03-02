@@ -1,6 +1,9 @@
 # Nuke.WebDocu
 
 [![Build Status](https://jenkins.dangl.me/buildStatus/icon?job=Nuke.WebDocu.Tests)](https://jenkins.dangl.me/job/Nuke.WebDocu.Tests/)
+
+[![Built with Nuke](http://nuke.build/rounded)](https://www.nuke.build)
+
 ![NuGet](https://img.shields.io/nuget/v/Nuke.WebDocu.svg)
 [![MyGet](https://img.shields.io/myget/dangl/v/Nuke.WebDocu.svg)]()
 
