@@ -17,6 +17,7 @@ using Nuke.Common.Tools.Xunit;
 using Nuke.Common.Tools.DocFx;
 using Nuke.Common.Tools.GitVersion;
 using Nuke.Core.Utilities;
+using Nuke.Core.Tooling;
 using Nuke.GitHub;
 using static Nuke.GitHub.ChangeLogExtensions;
 using static Nuke.GitHub.GitHubTasks;
@@ -37,6 +38,8 @@ class Build : NukeBuild
     [Parameter] string GitHubAuthenticationToken;
 
     string DocFxFile => SolutionDirectory / "docfx.json";
+    // This is used to to infer which dotnet sdk version to use when generating DocFX metadata
+    string DocFxDotNetSdkVersion = "2.1.4";
     string ChangeLogFile => RootDirectory / "CHANGELOG.md";
 
     Target Clean => _ => _
@@ -102,12 +105,11 @@ class Build : NukeBuild
         .DependsOn(Restore)
         .Executes(() =>
         {
-            if (IsLocalBuild)
-            {
-                SetVariable("VSINSTALLDIR", @"C:\Program Files (x86)\Microsoft Visual Studio\2017\Professional");
-                SetVariable("VisualStudioVersion", "15.0");
-            }
-
+            // So it uses a fixed, known version of MsBuild to generate the metadata. Otherwise,
+            // updates of dotnet or Visual Studio could introduce incompatibilities and generation failures
+            var dotnetPath = Path.GetDirectoryName(ToolPathResolver.GetPathExecutable("dotnet.exe"));
+            var msBuildPath = Path.Combine(dotnetPath, "sdk", DocFxDotNetSdkVersion, "MSBuild.dll");
+            SetVariable("MSBUILD_EXE_PATH", msBuildPath);
             DocFxMetadata(DocFxFile, s => s.SetLogLevel(DocFxLogLevel.Verbose));
         });
 
