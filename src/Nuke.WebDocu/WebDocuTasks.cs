@@ -1,12 +1,12 @@
-﻿using Nuke.Core.Tooling;
+﻿using Nuke.Common.Tooling;
 using System;
 using System.IO;
 using System.IO.Compression;
 using System.Net.Http;
 using System.Threading.Tasks;
-using Nuke.Core;
-using Nuke.Core.BuildServers;
-using static Nuke.Core.IO.PathConstruction;
+using Nuke.Common;
+using Nuke.Common.BuildServers;
+using static Nuke.Common.IO.PathConstruction;
 
 namespace Nuke.WebDocu
 {
