@@ -1,13 +1,13 @@
 ﻿using System;
 using System.Linq;
-using Nuke.Core;
+using Nuke.Common;
 using static Nuke.Common.Tools.DotNet.DotNetTasks;
 using static Nuke.Common.Tools.DocFx.DocFxTasks;
-using static Nuke.Core.IO.FileSystemTasks;
-using static Nuke.Core.IO.PathConstruction;
-using static Nuke.Core.EnvironmentInfo;
+using static Nuke.Common.IO.FileSystemTasks;
+using static Nuke.Common.IO.PathConstruction;
+using static Nuke.Common.EnvironmentInfo;
 using Nuke.Common.Tools.DotNet;
-using Nuke.Core.Utilities.Collections;
+using Nuke.Common.Utilities.Collections;
 using Nuke.WebDocu;
 using System.IO;
 using System.Threading.Tasks;
@@ -16,7 +16,8 @@ using static Nuke.Common.Tools.Xunit.XunitTasks;
 using Nuke.Common.Tools.Xunit;
 using Nuke.Common.Tools.DocFx;
 using Nuke.Common.Tools.GitVersion;
-using Nuke.Core.Utilities;
+using Nuke.Common.Utilities;
+using Nuke.Common.Tooling;
 using Nuke.GitHub;
 using static Nuke.GitHub.ChangeLogExtensions;
 using static Nuke.GitHub.GitHubTasks;
@@ -37,6 +38,9 @@ class Build : NukeBuild
     [Parameter] string GitHubAuthenticationToken;
 
     string DocFxFile => SolutionDirectory / "docfx.json";
+
+    // This is used to to infer which dotnet sdk version to use when generating DocFX metadata
+    string DocFxDotNetSdkVersion = "2.1.4";
     string ChangeLogFile => RootDirectory / "CHANGELOG.md";
 
     Target Clean => _ => _
@@ -58,7 +62,8 @@ class Build : NukeBuild
         .Executes(() =>
         {
             DotNetBuild(s => DefaultDotNetBuild
-                .SetFileVersion(GitVersion.AssemblySemVer));
+                .SetFileVersion(GitVersion.GetNormalizedFileVersion())
+                .SetAssemblyVersion(GitVersion.AssemblySemVer));
         });
 
     Target Pack => _ => _
@@ -101,13 +106,12 @@ class Build : NukeBuild
         .DependsOn(Restore)
         .Executes(() =>
         {
-            if (IsLocalBuild)
-            {
-                SetVariable("VSINSTALLDIR", @"C:\Program Files (x86)\Microsoft Visual Studio\2017\Professional");
-                SetVariable("VisualStudioVersion", "15.0");
-            }
-
-            DocFxMetadata(DocFxFile, s => s.SetLogLevel(DocFxLogLevel.Verbose));
+            // So it uses a fixed, known version of MsBuild to generate the metadata. Otherwise,
+            // updates of dotnet or Visual Studio could introduce incompatibilities and generation failures
+            var dotnetPath = Path.GetDirectoryName(ToolPathResolver.GetPathExecutable("dotnet.exe"));
+            var msBuildPath = Path.Combine(dotnetPath, "sdk", DocFxDotNetSdkVersion, "MSBuild.dll");
+            SetVariable("MSBUILD_EXE_PATH", msBuildPath);
+            DocFxMetadata(DocFxFile, s => s.SetLogLevel(DocFxLogLevel.Warning));
         });
 
     Target BuildDocumentation => _ => _
@@ -120,11 +124,12 @@ class Build : NukeBuild
             {
                 File.Delete(SolutionDirectory / "index.md");
             }
+
             File.Copy(SolutionDirectory / "README.md", SolutionDirectory / "index.md");
 
             DocFxBuild(DocFxFile, s => s
                 .ClearXRefMaps()
-                .SetLogLevel(DocFxLogLevel.Verbose));
+                .SetLogLevel(DocFxLogLevel.Warning));
 
             File.Delete(SolutionDirectory / "index.md");
         });
@@ -146,7 +151,7 @@ class Build : NukeBuild
         .DependsOn(Pack)
         .Requires(() => GitHubAuthenticationToken)
         .OnlyWhen(() => GitVersion.BranchName.Equals("master") || GitVersion.BranchName.Equals("origin/master"))
-        .Executes<Task>(async () =>
+        .Executes(() =>
         {
             var releaseTag = $"v{GitVersion.MajorMinorPatch}";
 
@@ -157,14 +162,17 @@ class Build : NukeBuild
 
             var repositoryInfo = GetGitHubRepositoryInfo(GitRepository);
 
-            await PublishRelease(new GitHubReleaseSettings()
-                .SetArtifactPaths(GlobFiles(OutputDirectory, "*.nupkg").NotEmpty().ToArray())
-                .SetCommitSha(GitVersion.Sha)
-                .SetReleaseNotes(completeChangeLog)
-                .SetRepositoryName(repositoryInfo.repositoryName)
-                .SetRepositoryOwner(repositoryInfo.gitHubOwner)
-                .SetTag(releaseTag)
-                .SetToken(GitHubAuthenticationToken)
-            );
+            PublishRelease(new GitHubReleaseSettings()
+                    .SetArtifactPaths(GlobFiles(OutputDirectory, "*.nupkg").NotEmpty().ToArray())
+                    .SetCommitSha(GitVersion.Sha)
+                    .SetReleaseNotes(completeChangeLog)
+                    .SetRepositoryName(repositoryInfo.repositoryName)
+                    .SetRepositoryOwner(repositoryInfo.gitHubOwner)
+                    .SetTag(releaseTag)
+                    .SetToken(GitHubAuthenticationToken)
+                )
+                .ConfigureAwait(false)
+                .GetAwaiter()
+                .GetResult();
         });
 }
