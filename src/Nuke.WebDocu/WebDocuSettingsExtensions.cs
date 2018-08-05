@@ -1,5 +1,5 @@
 ﻿using JetBrains.Annotations;
-using Nuke.Core.Tooling;
+using Nuke.Common.Tooling;
 using System;
 using System.Diagnostics.CodeAnalysis;
 
