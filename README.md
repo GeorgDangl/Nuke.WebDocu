@@ -1,6 +1,6 @@
 # Nuke.WebDocu
 
-[![Build Status](https://jenkins.dangl.me/buildStatus/icon?job=Nuke.WebDocu.Tests)](https://jenkins.dangl.me/job/Nuke.WebDocu.Tests/)
+[![Build Status](https://jenkins.dangl.me/buildStatus/icon?job=Nuke.WebDocu/develop)](https://jenkins.dangl.me/job/Nuke.WebDocu/develop)
 
 [![Built with Nuke](http://nuke.build/rounded)](https://www.nuke.build)
 
