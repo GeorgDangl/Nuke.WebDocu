@@ -52,7 +52,7 @@ namespace Nuke.WebDocu
                 var response = await new HttpClient().SendAsync(request);
                 if (!response.IsSuccessStatusCode)
                 {
-                    throw new Exception("Upload failed");
+                    throw new Exception("Upload failed with status code: " + response.StatusCode + Environment.NewLine + await response.Content.ReadAsStringAsync());
                 }
             }
 
@@ -67,12 +67,12 @@ namespace Nuke.WebDocu
                         var requestContent = new MultipartFormDataContent();
                         requestContent.Add(new StringContent(settings.DocuApiKey), "ApiKey");
                         requestContent.Add(new StringContent(settings.Version), "Version");
-                        requestContent.Add(new StreamContent(assetStream), "assetFile", fileName);
+                        requestContent.Add(new StreamContent(assetStream), "AssetFile", fileName);
                         request.Content = requestContent;
                         var response = await new HttpClient().SendAsync(request);
                         if (!response.IsSuccessStatusCode)
                         {
-                            throw new Exception("Upload failed");
+                            throw new Exception("Upload failed with status code: " + response.StatusCode + Environment.NewLine + await response.Content.ReadAsStringAsync());
                         }
                     }
                 }
