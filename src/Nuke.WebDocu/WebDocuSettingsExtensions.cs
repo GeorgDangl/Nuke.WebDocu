@@ -18,12 +18,16 @@ namespace Nuke.WebDocu
             => toolSettings.CloneAndModify(s => s.DocuApiKey = docuApiKey);
 
         [Pure]
-        public static WebDocuSettings SetDocuApiEndpoint(this WebDocuSettings toolSettings, string docuApiEndpoint)
-            => toolSettings.CloneAndModify(s => s.DocuApiEndpoint = docuApiEndpoint);
+        public static WebDocuSettings SetDocuBaseUrl(this WebDocuSettings toolSettings, string docuBaseUrl)
+            => toolSettings.CloneAndModify(s => s.DocuBaseUrl = docuBaseUrl);
 
         [Pure]
         public static WebDocuSettings SetVersion(this WebDocuSettings toolSettings, string version)
             => toolSettings.CloneAndModify(s => s.Version = version);
+
+        [Pure]
+        public static WebDocuSettings SetAssetFilePaths(this WebDocuSettings toolSettings, string[] assetFilePaths)
+            => toolSettings.CloneAndModify(s => s.AssetFilePaths = assetFilePaths);
 
         private static WebDocuSettings CloneAndModify(this WebDocuSettings toolSettings, Action<WebDocuSettings> modifyAction)
         {

@@ -1,6 +1,7 @@
 ﻿using JetBrains.Annotations;
 using Nuke.Common.Tooling;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 
 namespace Nuke.WebDocu
@@ -12,7 +13,8 @@ namespace Nuke.WebDocu
     {
         public virtual string SourceDirectory { get; internal set; }
         public virtual string DocuApiKey { get; internal set; }
-        public virtual string DocuApiEndpoint { get; internal set; }
+        public virtual string DocuBaseUrl { get; internal set; }
         public virtual string Version { get; internal set; }
+        public virtual string[] AssetFilePaths { get; set; }
     }
 }

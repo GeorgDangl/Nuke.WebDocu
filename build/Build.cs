@@ -38,7 +38,7 @@ class Build : NukeBuild
     [GitVersion] readonly GitVersion GitVersion;
     [GitRepository] readonly GitRepository GitRepository;
 
-    [KeyVaultSecret] string DocuApiEndpoint;
+    [KeyVaultSecret] string DocuBaseUrl;
     [KeyVaultSecret] string GitHubAuthenticationToken;
     [KeyVaultSecret] string PublicMyGetSource;
     [KeyVaultSecret] string PublicMyGetApiKey;
@@ -157,10 +157,10 @@ class Build : NukeBuild
         .DependsOn(Push) // To have a relation between pushed package version and published docs version
         .DependsOn(BuildDocumentation)
         .Requires(() => DocuApiKey)
-        .Requires(() => DocuApiEndpoint)
+        .Requires(() => DocuBaseUrl)
         .Executes(() =>
         {
-            WebDocuTasks.WebDocu(s => s.SetDocuApiEndpoint(DocuApiEndpoint)
+            WebDocuTasks.WebDocu(s => s.SetDocuBaseUrl(DocuBaseUrl)
                 .SetDocuApiKey(DocuApiKey)
                 .SetSourceDirectory(OutputDirectory / "docs")
                 .SetVersion(GitVersion.NuGetVersion));
