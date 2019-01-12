@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Nuke.Common;
 using Nuke.Common.BuildServers;
 using static Nuke.Common.IO.PathConstruction;
+using System.Linq;
 
 namespace Nuke.WebDocu
 {
@@ -42,7 +43,7 @@ namespace Nuke.WebDocu
         {
             using (var docsStream = File.OpenRead(zipPackage))
             {
-                var request = new HttpRequestMessage(HttpMethod.Post, settings.DocuApiEndpoint);
+                var request = new HttpRequestMessage(HttpMethod.Post, settings.DocuBaseUrl.TrimEnd('/') + "/API/Projects/Upload");
                 var requestContent = new MultipartFormDataContent();
                 requestContent.Add(new StringContent(settings.DocuApiKey), "ApiKey");
                 requestContent.Add(new StringContent(settings.Version), "Version");
@@ -51,9 +52,42 @@ namespace Nuke.WebDocu
                 var response = await new HttpClient().SendAsync(request);
                 if (!response.IsSuccessStatusCode)
                 {
-                    throw new Exception("Upload failed");
+                    throw new Exception("Upload failed with status code: " + response.StatusCode + Environment.NewLine + await response.Content.ReadAsStringAsync());
                 }
             }
+
+            if (settings.AssetFilePaths?.Any() == true)
+            {
+                foreach (var assetFilePath in settings.AssetFilePaths)
+                {
+                    using (var assetStream = File.OpenRead(assetFilePath))
+                    {
+                        var fileName = NormalizeFilename(assetFilePath);
+                        var request = new HttpRequestMessage(HttpMethod.Post, settings.DocuBaseUrl.TrimEnd('/') + "/API/ProjectAssets/Upload");
+                        var requestContent = new MultipartFormDataContent();
+                        requestContent.Add(new StringContent(settings.DocuApiKey), "ApiKey");
+                        requestContent.Add(new StringContent(settings.Version), "Version");
+                        requestContent.Add(new StreamContent(assetStream), "AssetFile", fileName);
+                        request.Content = requestContent;
+                        var response = await new HttpClient().SendAsync(request);
+                        if (!response.IsSuccessStatusCode)
+                        {
+                            throw new Exception("Upload failed with status code: " + response.StatusCode + Environment.NewLine + await response.Content.ReadAsStringAsync());
+                        }
+                    }
+                }
+            }
+        }
+
+        static string NormalizeFilename(string originalFilename)
+        {
+            if (string.IsNullOrWhiteSpace(originalFilename))
+            {
+                return string.Empty;
+            }
+
+            var filename = Path.GetFileName(originalFilename).Trim();
+            return filename;
         }
 
         static void FixGitUrlsIfInJenkinsJob(string sourceDirectory)

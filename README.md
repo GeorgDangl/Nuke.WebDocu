@@ -31,7 +31,7 @@ When publishing to WebDocu, you have to include the version of the docs.
 Target UploadDocumentation => _ => _
     .DependsOn(BuildDocumentation)
     .Requires(() => DocuApiKey)
-    .Requires(() => DocuApiEndpoint)
+    .Requires(() => DocuBaseUrl)
     .Executes(() =>
     {
         WebDocuTasks.WebDocu(s =>
@@ -42,7 +42,7 @@ Target UploadDocumentation => _ => _
                 .Select(x => WebDocuTasks.GetVersionFromNuGetPackageFilename(x, "Nuke.WebDeploy"))
                 .First();
 
-            return s.SetDocuApiEndpoint(DocuApiEndpoint)
+            return s.SetDocuBaseUrl(DocuBaseUrl)
                     .SetDocuApiKey(DocuApiKey)
                     .SetSourceDirectory(OutputDirectory / "docs")
                     .SetVersion(packageVersion);
