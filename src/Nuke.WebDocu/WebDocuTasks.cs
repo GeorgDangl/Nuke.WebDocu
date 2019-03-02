@@ -95,10 +95,10 @@ namespace Nuke.WebDocu
             var jenkinsInstance = Jenkins.Instance;
             if (jenkinsInstance == null)
             {
-                Logger.Log("Not inside a Jenkins job, \"View Source\" links will not be changed");
+                Logger.Log(LogLevel.Normal, "Not inside a Jenkins job, \"View Source\" links will not be changed");
                 return;
             }
-            Logger.Log("Inside a Jenkins job, \"View Source\" links will be changed to point to the commit hash");
+            Logger.Log(LogLevel.Normal, "Inside a Jenkins job, \"View Source\" links will be changed to point to the commit hash");
 
             // In Jenkins, the Git branch is something like "origin/dev", which should
             // only be "dev" to generate correct urls.

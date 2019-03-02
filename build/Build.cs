@@ -2,7 +2,6 @@
 using System.Linq;
 using Nuke.Common;
 using static Nuke.Common.Tools.DotNet.DotNetTasks;
-using static Nuke.Common.Tools.DocFx.DocFxTasks;
 using static Nuke.Common.IO.FileSystemTasks;
 using static Nuke.Common.IO.PathConstruction;
 using static Nuke.Common.EnvironmentInfo;
@@ -13,7 +12,8 @@ using System.IO;
 using Nuke.Common.Git;
 using static Nuke.Common.Tools.Xunit.XunitTasks;
 using Nuke.Common.Tools.Xunit;
-using Nuke.Common.Tools.DocFx;
+using static Nuke.DocFX.DocFXTasks;
+using Nuke.DocFX;
 using Nuke.Common.Tools.GitVersion;
 using Nuke.Common.Utilities;
 using Nuke.Common.Tooling;
@@ -23,14 +23,18 @@ using static Nuke.GitHub.GitHubTasks;
 using static Nuke.Common.ChangeLog.ChangelogTasks;
 using Nuke.Azure.KeyVault;
 
-[KeyVaultSettings(
-    VaultBaseUrlParameterName = nameof(KeyVaultBaseUrl),
-    ClientIdParameterName = nameof(KeyVaultClientId),
-    ClientSecretParameterName = nameof(KeyVaultClientSecret))]
 class Build : NukeBuild
 {
     // Console application entry. Also defines the default target.
     public static int Main() => Execute<Build>(x => x.Compile);
+
+    [KeyVaultSettings(
+        BaseUrlParameterName = nameof(KeyVaultBaseUrl),
+        ClientIdParameterName = nameof(KeyVaultClientId),
+        ClientSecretParameterName = nameof(KeyVaultClientSecret))]
+    readonly KeyVaultSettings KeyVaultSettings;
+
+    [Parameter] readonly Configuration Configuration = IsLocalBuild ? Configuration.Debug : Configuration.Release;
 
     [Parameter] string KeyVaultBaseUrl;
     [Parameter] string KeyVaultClientId;
@@ -45,16 +49,18 @@ class Build : NukeBuild
     [KeyVaultSecret("NukeWebDocu-DocuApiKey")] string DocuApiKey;
     [KeyVaultSecret] string NuGetApiKey;
 
-    string DocFxFile => SolutionDirectory / "docfx.json";
+    string DocFxFile => RootDirectory / "docfx.json";
 
-    // This is used to to infer which dotnet sdk version to use when generating DocFX metadata
-    string DocFxDotNetSdkVersion = "2.1.4";
     string ChangeLogFile => RootDirectory / "CHANGELOG.md";
+    AbsolutePath OutputDirectory => RootDirectory / "output";
+    AbsolutePath SourceDirectory => RootDirectory / "src";
+    AbsolutePath TestsDirectory => RootDirectory / "test";
 
     Target Clean => _ => _
         .Executes(() =>
         {
-            DeleteDirectories(GlobDirectories(SourceDirectory, "**/bin", "**/obj"));
+            SourceDirectory.GlobDirectories("**/bin", "**/obj").ForEach(DeleteDirectory);
+            TestsDirectory.GlobDirectories("**/bin", "**/obj").ForEach(DeleteDirectory);
             EnsureCleanDirectory(OutputDirectory);
         });
 
@@ -62,16 +68,19 @@ class Build : NukeBuild
         .DependsOn(Clean)
         .Executes(() =>
         {
-            DotNetRestore(s => DefaultDotNetRestore);
+            DotNetRestore();
         });
 
     Target Compile => _ => _
         .DependsOn(Restore)
         .Executes(() =>
         {
-            DotNetBuild(s => DefaultDotNetBuild
+            DotNetBuild(x => x
+                .SetConfiguration(Configuration)
+                .EnableNoRestore()
                 .SetFileVersion(GitVersion.GetNormalizedFileVersion())
-                .SetAssemblyVersion(GitVersion.AssemblySemVer));
+                .SetAssemblyVersion(GitVersion.AssemblySemVer)
+                .SetInformationalVersion(GitVersion.InformationalVersion));
         });
 
     Target Pack => _ => _
@@ -80,15 +89,21 @@ class Build : NukeBuild
         {
             var changeLog = GetCompleteChangeLog(ChangeLogFile)
                 .EscapeStringPropertyForMsBuild();
-            DotNetPack(s => DefaultDotNetPack
-                .SetPackageReleaseNotes(changeLog));
+
+            DotNetPack(x => x
+                .SetConfiguration(Configuration)
+                .SetPackageReleaseNotes(changeLog)
+                .SetTitle("WebDocu for NUKE Build - www.dangl-it.com")
+                .EnableNoBuild()
+                .SetOutputDirectory(OutputDirectory)
+                .SetVersion(GitVersion.NuGetVersion));
         });
 
     Target Push => _ => _
         .DependsOn(Pack)
         .Requires(() => PublicMyGetSource)
         .Requires(() => PublicMyGetApiKey)
-        .Requires(() => Configuration.EqualsOrdinalIgnoreCase("Release"))
+        .Requires(() => Configuration == Configuration.Release)
         .Executes(() =>
         {
             GlobFiles(OutputDirectory, "*.nupkg").NotEmpty()
@@ -114,23 +129,18 @@ class Build : NukeBuild
         .DependsOn(Compile)
         .Executes(() =>
         {
-            void TestXunit()
-                => Xunit2(GlobFiles(SolutionDirectory, $"*/bin/{Configuration}/net46*/Nuke.*.Tests.dll").NotEmpty(),
-                    s => s.AddResultReport(Xunit2ResultFormat.Xml, OutputDirectory / "tests.xml").SetFramework("net461"));
-
-            TestXunit();
+            DotNetTest(x => x
+                .SetNoBuild(true)
+                .SetProjectFile(RootDirectory / "test" / "Nuke.WebDocu.Tests")
+                .SetTestAdapterPath(".")
+                .SetLogger($"xunit;LogFilePath={OutputDirectory / "tests.xml"}"));
         });
 
     Target BuildDocFxMetadata => _ => _
         .DependsOn(Restore)
         .Executes(() =>
         {
-            // So it uses a fixed, known version of MsBuild to generate the metadata. Otherwise,
-            // updates of dotnet or Visual Studio could introduce incompatibilities and generation failures
-            var dotnetPath = Path.GetDirectoryName(ToolPathResolver.GetPathExecutable("dotnet.exe"));
-            var msBuildPath = Path.Combine(dotnetPath, "sdk", DocFxDotNetSdkVersion, "MSBuild.dll");
-            SetVariable("MSBUILD_EXE_PATH", msBuildPath);
-            DocFxMetadata(DocFxFile, s => s.SetLogLevel(DocFxLogLevel.Warning));
+            DocFXMetadata(x => x.AddProjects(DocFxFile));
         });
 
     Target BuildDocumentation => _ => _
@@ -139,18 +149,16 @@ class Build : NukeBuild
         .Executes(() =>
         {
             // Using README.md as index.md
-            if (File.Exists(SolutionDirectory / "index.md"))
+            if (File.Exists(RootDirectory / "index.md"))
             {
-                File.Delete(SolutionDirectory / "index.md");
+                File.Delete(RootDirectory / "index.md");
             }
 
-            File.Copy(SolutionDirectory / "README.md", SolutionDirectory / "index.md");
+            File.Copy(RootDirectory / "README.md", RootDirectory / "index.md");
 
-            DocFxBuild(DocFxFile, s => s
-                .ClearXRefMaps()
-                .SetLogLevel(DocFxLogLevel.Warning));
+            DocFXBuild(x => x.SetConfigFile(DocFxFile));
 
-            File.Delete(SolutionDirectory / "index.md");
+            File.Delete(RootDirectory / "index.md");
         });
 
     Target UploadDocumentation => _ => _
@@ -169,8 +177,8 @@ class Build : NukeBuild
     Target PublishGitHubRelease => _ => _
         .DependsOn(Pack)
         .Requires(() => GitHubAuthenticationToken)
-        .OnlyWhen(() => GitVersion.BranchName.Equals("master") || GitVersion.BranchName.Equals("origin/master"))
-        .Executes(() =>
+        .OnlyWhenDynamic(() => GitVersion.BranchName.Equals("master") || GitVersion.BranchName.Equals("origin/master"))
+        .Executes(async () =>
         {
             var releaseTag = $"v{GitVersion.MajorMinorPatch}";
 
@@ -181,17 +189,14 @@ class Build : NukeBuild
 
             var repositoryInfo = GetGitHubRepositoryInfo(GitRepository);
 
-            PublishRelease(new GitHubReleaseSettings()
-                    .SetArtifactPaths(GlobFiles(OutputDirectory, "*.nupkg").NotEmpty().ToArray())
+            await PublishRelease(x => x
+                    .SetArtifactPaths(GlobFiles(RootDirectory, "*.nupkg").NotEmpty().ToArray())
                     .SetCommitSha(GitVersion.Sha)
                     .SetReleaseNotes(completeChangeLog)
                     .SetRepositoryName(repositoryInfo.repositoryName)
                     .SetRepositoryOwner(repositoryInfo.gitHubOwner)
                     .SetTag(releaseTag)
                     .SetToken(GitHubAuthenticationToken)
-                )
-                .ConfigureAwait(false)
-                .GetAwaiter()
-                .GetResult();
+                );
         });
 }
