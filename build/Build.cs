@@ -101,8 +101,8 @@ class Build : NukeBuild
 
     Target Push => _ => _
         .DependsOn(Pack)
-        .Requires(() => PublicMyGetSource)
-        .Requires(() => PublicMyGetApiKey)
+        .Requires(() => !string.IsNullOrWhiteSpace(PublicMyGetSource))
+        .Requires(() => !string.IsNullOrWhiteSpace(PublicMyGetApiKey))
         .Requires(() => Configuration == Configuration.Release)
         .Executes(() =>
         {
@@ -164,8 +164,8 @@ class Build : NukeBuild
     Target UploadDocumentation => _ => _
         .DependsOn(Push) // To have a relation between pushed package version and published docs version
         .DependsOn(BuildDocumentation)
-        .Requires(() => DocuApiKey)
-        .Requires(() => DocuBaseUrl)
+        .Requires(() => !string.IsNullOrWhiteSpace(DocuApiKey))
+        .Requires(() => !string.IsNullOrWhiteSpace(DocuBaseUrl))
         .Executes(() =>
         {
             WebDocuTasks.WebDocu(s => s.SetDocuBaseUrl(DocuBaseUrl)
@@ -176,7 +176,7 @@ class Build : NukeBuild
 
     Target PublishGitHubRelease => _ => _
         .DependsOn(Pack)
-        .Requires(() => GitHubAuthenticationToken)
+        .Requires(() => !string.IsNullOrWhiteSpace(GitHubAuthenticationToken))
         .OnlyWhenDynamic(() => GitVersion.BranchName.Equals("master") || GitVersion.BranchName.Equals("origin/master"))
         .Executes(async () =>
         {
