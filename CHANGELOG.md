@@ -2,6 +2,9 @@
 
 All notable changes to **Nuke.WebDocu** are documented here.
 
+## v1.4.0:
+- Update to NUKE 0.19.0
+
 ## v1.3.0:
 - Add feature for asset file upload
 - The `DocuBaseUrl` property replaced `DocuApiEndpoint`
