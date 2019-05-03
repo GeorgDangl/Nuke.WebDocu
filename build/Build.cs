@@ -190,7 +190,7 @@ class Build : NukeBuild
             var repositoryInfo = GetGitHubRepositoryInfo(GitRepository);
 
             await PublishRelease(x => x
-                    .SetArtifactPaths(GlobFiles(RootDirectory, "*.nupkg").NotEmpty().ToArray())
+                    .SetArtifactPaths(GlobFiles(OutputDirectory, "*.nupkg").NotEmpty().ToArray())
                     .SetCommitSha(GitVersion.Sha)
                     .SetReleaseNotes(completeChangeLog)
                     .SetRepositoryName(repositoryInfo.repositoryName)
