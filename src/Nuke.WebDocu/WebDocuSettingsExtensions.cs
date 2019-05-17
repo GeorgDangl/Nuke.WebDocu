@@ -26,6 +26,10 @@ namespace Nuke.WebDocu
             => toolSettings.CloneAndModify(s => s.Version = version);
 
         [Pure]
+        public static WebDocuSettings SetMarkdownChangelog(this WebDocuSettings toolSettings, string markdownChangelog)
+            => toolSettings.CloneAndModify(s => s.MarkdownChangelog = markdownChangelog);
+
+        [Pure]
         public static WebDocuSettings SetAssetFilePaths(this WebDocuSettings toolSettings, string[] assetFilePaths)
             => toolSettings.CloneAndModify(s => s.AssetFilePaths = assetFilePaths);
 

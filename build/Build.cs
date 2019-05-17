@@ -168,8 +168,11 @@ class Build : NukeBuild
         .Requires(() => !string.IsNullOrWhiteSpace(DocuBaseUrl))
         .Executes(() =>
         {
+            var changeLog = GetCompleteChangeLog(ChangeLogFile);
+
             WebDocuTasks.WebDocu(s => s.SetDocuBaseUrl(DocuBaseUrl)
                 .SetDocuApiKey(DocuApiKey)
+                .SetMarkdownChangelog(changeLog)
                 .SetSourceDirectory(OutputDirectory / "docs")
                 .SetVersion(GitVersion.NuGetVersion));
         });

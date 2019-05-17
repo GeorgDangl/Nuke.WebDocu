@@ -47,6 +47,11 @@ namespace Nuke.WebDocu
                 var requestContent = new MultipartFormDataContent();
                 requestContent.Add(new StringContent(settings.DocuApiKey), "ApiKey");
                 requestContent.Add(new StringContent(settings.Version), "Version");
+                if (!string.IsNullOrWhiteSpace(settings.MarkdownChangelog))
+                {
+                    requestContent.Add(new StringContent(settings.MarkdownChangelog), "MarkdownChangelog");
+                }
+
                 requestContent.Add(new StreamContent(docsStream), "ProjectPackage", "docs.zip");
                 request.Content = requestContent;
                 var response = await new HttpClient().SendAsync(request);

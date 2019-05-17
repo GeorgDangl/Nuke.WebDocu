@@ -15,6 +15,7 @@ namespace Nuke.WebDocu
         public virtual string DocuApiKey { get; internal set; }
         public virtual string DocuBaseUrl { get; internal set; }
         public virtual string Version { get; internal set; }
+        public virtual string MarkdownChangelog { get; internal set; }
         public virtual string[] AssetFilePaths { get; set; }
     }
 }
