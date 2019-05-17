@@ -2,6 +2,9 @@
 
 All notable changes to **Nuke.WebDocu** are documented here.
 
+## v1.4.1:
+- Add support for `MarkdownChangelog`
+
 ## v1.4.0:
 - Update to NUKE 0.19.0
 
