@@ -5,9 +5,9 @@ using System.IO.Compression;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Nuke.Common;
-using Nuke.Common.BuildServers;
 using static Nuke.Common.IO.PathConstruction;
 using System.Linq;
+using Nuke.Common.CI.Jenkins;
 
 namespace Nuke.WebDocu
 {
