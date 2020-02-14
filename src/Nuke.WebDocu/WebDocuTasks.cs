@@ -67,6 +67,7 @@ namespace Nuke.WebDocu
                 {
                     using (var assetStream = File.OpenRead(assetFilePath))
                     {
+                        Logger.Normal($"Uploading asset {assetFilePath}");
                         var fileName = NormalizeFilename(assetFilePath);
                         var request = new HttpRequestMessage(HttpMethod.Post, settings.DocuBaseUrl.TrimEnd('/') + "/API/ProjectAssets/Upload");
                         var requestContent = new MultipartFormDataContent();
