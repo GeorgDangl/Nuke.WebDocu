@@ -134,7 +134,9 @@ class Build : NukeBuild
                 .SetNoBuild(true)
                 .SetProjectFile(RootDirectory / "test" / "Nuke.WebDocu.Tests")
                 .SetTestAdapterPath(".")
-                .SetLogger($"xunit;LogFilePath={OutputDirectory / "tests.xml"}"));
+                .CombineWith(c => new[] {"netcoreapp3.0", "net472"}
+                    .Select(framework => c.SetFramework(framework).SetLogger($"xunit;LogFilePath={OutputDirectory / $"tests-{framework}.xml"}"))
+                ), degreeOfParallelism: Environment.ProcessorCount, completeOnFailure: true);
         });
 
     Target BuildDocFxMetadata => _ => _

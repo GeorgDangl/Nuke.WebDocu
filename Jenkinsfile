@@ -47,7 +47,7 @@ pipeline {
                             skipped(failureNewThreshold: '0', failureThreshold: '0', unstableNewThreshold: '0', unstableThreshold: '0')
                         ],
                         tools: [
-                            xUnitDotNet(deleteOutputFiles: true, failIfNotNew: true, pattern: '**/*tests.xml', stopProcessingIfError: true)
+                            xUnitDotNet(deleteOutputFiles: true, failIfNotNew: true, pattern: '**/*tests-*.xml', stopProcessingIfError: true)
                         ])
                 }
             }
