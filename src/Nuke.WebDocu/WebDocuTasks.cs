@@ -5,9 +5,9 @@ using System.IO.Compression;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Nuke.Common;
-using Nuke.Common.BuildServers;
 using static Nuke.Common.IO.PathConstruction;
 using System.Linq;
+using Nuke.Common.CI.Jenkins;
 
 namespace Nuke.WebDocu
 {
@@ -67,6 +67,7 @@ namespace Nuke.WebDocu
                 {
                     using (var assetStream = File.OpenRead(assetFilePath))
                     {
+                        Logger.Normal($"Uploading asset {assetFilePath}");
                         var fileName = NormalizeFilename(assetFilePath);
                         var request = new HttpRequestMessage(HttpMethod.Post, settings.DocuBaseUrl.TrimEnd('/') + "/API/ProjectAssets/Upload");
                         var requestContent = new MultipartFormDataContent();

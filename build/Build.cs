@@ -12,8 +12,8 @@ using System.IO;
 using Nuke.Common.Git;
 using static Nuke.Common.Tools.Xunit.XunitTasks;
 using Nuke.Common.Tools.Xunit;
-using static Nuke.DocFX.DocFXTasks;
-using Nuke.DocFX;
+using static Nuke.Common.Tools.DocFX.DocFXTasks;
+using Nuke.Common.Tools.DocFX;
 using Nuke.Common.Tools.GitVersion;
 using Nuke.Common.Utilities;
 using Nuke.Common.Tooling;
@@ -21,7 +21,8 @@ using Nuke.GitHub;
 using static Nuke.GitHub.ChangeLogExtensions;
 using static Nuke.GitHub.GitHubTasks;
 using static Nuke.Common.ChangeLog.ChangelogTasks;
-using Nuke.Azure.KeyVault;
+using Nuke.Common.Tools.AzureKeyVault.Attributes;
+using Nuke.Common.IO;
 
 class Build : NukeBuild
 {
@@ -78,7 +79,7 @@ class Build : NukeBuild
             DotNetBuild(x => x
                 .SetConfiguration(Configuration)
                 .EnableNoRestore()
-                .SetFileVersion(GitVersion.GetNormalizedFileVersion())
+                .SetFileVersion(GitVersion.AssemblySemFileVer)
                 .SetAssemblyVersion(GitVersion.AssemblySemVer)
                 .SetInformationalVersion(GitVersion.InformationalVersion));
         });
@@ -133,7 +134,9 @@ class Build : NukeBuild
                 .SetNoBuild(true)
                 .SetProjectFile(RootDirectory / "test" / "Nuke.WebDocu.Tests")
                 .SetTestAdapterPath(".")
-                .SetLogger($"xunit;LogFilePath={OutputDirectory / "tests.xml"}"));
+                .CombineWith(c => new[] {"netcoreapp3.0", "net472"}
+                    .Select(framework => c.SetFramework(framework).SetLogger($"xunit;LogFilePath={OutputDirectory / $"tests-{framework}.xml"}"))
+                ), degreeOfParallelism: Environment.ProcessorCount, completeOnFailure: true);
         });
 
     Target BuildDocFxMetadata => _ => _
