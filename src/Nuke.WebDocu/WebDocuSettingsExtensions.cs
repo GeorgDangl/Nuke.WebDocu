@@ -33,6 +33,10 @@ namespace Nuke.WebDocu
         public static WebDocuSettings SetAssetFilePaths(this WebDocuSettings toolSettings, string[] assetFilePaths)
             => toolSettings.CloneAndModify(s => s.AssetFilePaths = assetFilePaths);
 
+        [Pure]
+        public static WebDocuSettings SetSkipForVersionConflicts(this WebDocuSettings toolSettings, bool skipForVersionConflicts)
+            => toolSettings.CloneAndModify(s => s.SkipForVersionConflicts = skipForVersionConflicts);
+
         private static WebDocuSettings CloneAndModify(this WebDocuSettings toolSettings, Action<WebDocuSettings> modifyAction)
         {
             toolSettings = toolSettings.NewInstance();
