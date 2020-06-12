@@ -57,6 +57,15 @@ namespace Nuke.WebDocu
                 var response = await new HttpClient().SendAsync(request);
                 if (!response.IsSuccessStatusCode)
                 {
+                    if (response.StatusCode == System.Net.HttpStatusCode.Conflict
+                        && settings.SkipForVersionConflicts)
+                    {
+                        Logger.Normal($"WebDocu return Http status 409 - Conflict. This means that there is likely already an existing" +
+                            $" combination of version and project present. The settings are enabled to skip this." +
+                            $" Asserts will also not be uploaded.");
+                        return;
+                    }
+
                     throw new Exception("Upload failed with status code: " + response.StatusCode + Environment.NewLine + await response.Content.ReadAsStringAsync());
                 }
             }
