@@ -2,6 +2,9 @@
 
 All notable changes to **Nuke.WebDocu** are documented here.
 
+## v1.7.0:
+- Added `Azure.Storage.Blobs` as a dependency and added feature to directly upload asset files to Azure Blob Storage via SAS if supported by the WebDocu instance
+
 ## v1.6.0:
 - Introduced a new setting to configure if duplicates of ProjectName / Version should be skipped when they already exist on the server
 
