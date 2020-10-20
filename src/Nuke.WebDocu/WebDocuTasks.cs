@@ -8,6 +8,11 @@ using Nuke.Common;
 using static Nuke.Common.IO.PathConstruction;
 using System.Linq;
 using Nuke.Common.CI.Jenkins;
+using System.Web;
+using Newtonsoft.Json;
+using System.Text;
+using Newtonsoft.Json.Linq;
+using Azure.Storage.Blobs;
 
 namespace Nuke.WebDocu
 {
@@ -74,22 +79,74 @@ namespace Nuke.WebDocu
             {
                 foreach (var assetFilePath in settings.AssetFilePaths)
                 {
-                    using (var assetStream = File.OpenRead(assetFilePath))
-                    {
-                        Logger.Normal($"Uploading asset {assetFilePath}");
-                        var fileName = NormalizeFilename(assetFilePath);
-                        var request = new HttpRequestMessage(HttpMethod.Post, settings.DocuBaseUrl.TrimEnd('/') + "/API/ProjectAssets/Upload");
-                        var requestContent = new MultipartFormDataContent();
-                        requestContent.Add(new StringContent(settings.DocuApiKey), "ApiKey");
-                        requestContent.Add(new StringContent(settings.Version), "Version");
-                        requestContent.Add(new StreamContent(assetStream), "AssetFile", fileName);
-                        request.Content = requestContent;
-                        var response = await new HttpClient().SendAsync(request);
-                        if (!response.IsSuccessStatusCode)
-                        {
-                            throw new Exception("Upload failed with status code: " + response.StatusCode + Environment.NewLine + await response.Content.ReadAsStringAsync());
-                        }
-                    }
+                    await UploadAssetFile(assetFilePath, settings);
+                }
+            }
+        }
+
+        static async Task UploadAssetFile(string assetFilePath, WebDocuSettings settings)
+        {
+            Logger.Normal($"Uploading asset {assetFilePath}");
+
+            if (!await UploadAssetFileViaSas(assetFilePath, settings))
+            {
+                await UploadAssetFileDirectly(assetFilePath, settings);
+            }
+            else
+            {
+                Logger.Normal("File was uploaded via direct SAS upload to Azure Blob Storage");
+            }
+        }
+
+        static async Task<bool> UploadAssetFileViaSas(string assetFilePath, WebDocuSettings settings)
+        {
+            var httpClient = new HttpClient();
+            using (var assetStream = File.OpenRead(assetFilePath))
+            {
+                var fileName = NormalizeFilename(assetFilePath);
+                var sasRequest = new HttpRequestMessage(HttpMethod.Post, settings.DocuBaseUrl.TrimEnd('/')
+                    + $"/API/ProjectAssets/SASUpload?apiKey={HttpUtility.UrlEncode(settings.DocuApiKey)}&version={HttpUtility.UrlEncode(settings.Version)}");
+                var requestContent = new StringContent(JsonConvert.SerializeObject(new
+                {
+                    FileName = fileName,
+                    FileSizeInBytes = assetStream.Length
+                }), Encoding.UTF8, "application/json");
+                sasRequest.Content = requestContent;
+                var sasResponse = await httpClient.SendAsync(sasRequest);
+                if (!sasResponse.IsSuccessStatusCode)
+                {
+                    return false;
+                }
+
+                var sasResponseJson = JObject.Parse(await sasResponse.Content.ReadAsStringAsync());
+                var sasLink = sasResponseJson["UploadLink"]?.ToString() ?? sasResponseJson["uploadLink"]?.ToString();
+                if (string.IsNullOrWhiteSpace(sasLink))
+                {
+                    return false;
+                }
+
+                var sasBlobClient = new BlobClient(new Uri(sasLink));
+                var uploadResponse = await sasBlobClient.UploadAsync(assetStream);
+                return uploadResponse.GetRawResponse().Status >= 200 && uploadResponse.GetRawResponse().Status <= 299;
+            }
+
+        }
+
+        static async Task UploadAssetFileDirectly(string assetFilePath, WebDocuSettings settings)
+        {
+            using (var assetStream = File.OpenRead(assetFilePath))
+            {
+                var fileName = NormalizeFilename(assetFilePath);
+                var request = new HttpRequestMessage(HttpMethod.Post, settings.DocuBaseUrl.TrimEnd('/') + "/API/ProjectAssets/Upload");
+                var requestContent = new MultipartFormDataContent();
+                requestContent.Add(new StringContent(settings.DocuApiKey), "ApiKey");
+                requestContent.Add(new StringContent(settings.Version), "Version");
+                requestContent.Add(new StreamContent(assetStream), "AssetFile", fileName);
+                request.Content = requestContent;
+                var response = await new HttpClient().SendAsync(request);
+                if (!response.IsSuccessStatusCode)
+                {
+                    throw new Exception("Upload failed with status code: " + response.StatusCode + Environment.NewLine + await response.Content.ReadAsStringAsync());
                 }
             }
         }
