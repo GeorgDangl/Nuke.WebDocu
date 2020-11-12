@@ -35,7 +35,7 @@ class Build : NukeBuild
         ClientSecretParameterName = nameof(KeyVaultClientSecret))]
     readonly KeyVaultSettings KeyVaultSettings;
 
-    [Parameter] readonly Configuration Configuration = IsLocalBuild ? Configuration.Debug : Configuration.Release;
+    [Parameter] readonly string Configuration = IsLocalBuild ? "Debug" : "Release";
 
     [Parameter] string KeyVaultBaseUrl;
     [Parameter] string KeyVaultClientId;
@@ -104,7 +104,7 @@ class Build : NukeBuild
         .DependsOn(Pack)
         .Requires(() => !string.IsNullOrWhiteSpace(PublicMyGetSource))
         .Requires(() => !string.IsNullOrWhiteSpace(PublicMyGetApiKey))
-        .Requires(() => Configuration == Configuration.Release)
+        .Requires(() => Configuration == "Release")
         .Executes(() =>
         {
             GlobFiles(OutputDirectory, "*.nupkg").NotEmpty()
