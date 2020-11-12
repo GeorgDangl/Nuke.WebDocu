@@ -4,13 +4,11 @@ using Nuke.Common;
 using static Nuke.Common.Tools.DotNet.DotNetTasks;
 using static Nuke.Common.IO.FileSystemTasks;
 using static Nuke.Common.IO.PathConstruction;
-using static Nuke.Common.EnvironmentInfo;
 using Nuke.Common.Tools.DotNet;
 using Nuke.Common.Utilities.Collections;
 using Nuke.WebDocu;
 using System.IO;
 using Nuke.Common.Git;
-using static Nuke.Common.Tools.Xunit.XunitTasks;
 using Nuke.Common.Tools.Xunit;
 using static Nuke.Common.Tools.DocFX.DocFXTasks;
 using Nuke.Common.Tools.DocFX;
@@ -35,7 +33,7 @@ class Build : NukeBuild
         ClientSecretParameterName = nameof(KeyVaultClientSecret))]
     readonly KeyVaultSettings KeyVaultSettings;
 
-    [Parameter] readonly Configuration Configuration = IsLocalBuild ? Configuration.Debug : Configuration.Release;
+    [Parameter] readonly string Configuration = IsLocalBuild ? "Debug" : "Release";
 
     [Parameter] string KeyVaultBaseUrl;
     [Parameter] string KeyVaultClientId;
@@ -104,7 +102,7 @@ class Build : NukeBuild
         .DependsOn(Pack)
         .Requires(() => !string.IsNullOrWhiteSpace(PublicMyGetSource))
         .Requires(() => !string.IsNullOrWhiteSpace(PublicMyGetApiKey))
-        .Requires(() => Configuration == Configuration.Release)
+        .Requires(() => Configuration == "Release")
         .Executes(() =>
         {
             GlobFiles(OutputDirectory, "*.nupkg").NotEmpty()
