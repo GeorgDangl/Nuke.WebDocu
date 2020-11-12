@@ -67,7 +67,14 @@ class Build : NukeBuild
         .DependsOn(Clean)
         .Executes(() =>
         {
-            DotNetRestore();
+            try
+            {
+                DotNetRestore();
+            }
+            catch
+            {
+                DotNetRestore(x => x.EnableNoCache());
+            }
         });
 
     Target Compile => _ => _
