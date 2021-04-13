@@ -164,7 +164,7 @@ namespace Nuke.WebDocu
 
         static void FixGitUrlsIfInJenkinsJob(string sourceDirectory)
         {
-            var jenkinsInstance = Jenkins.Instance;
+            var jenkinsInstance = Jenkins.Instance as Jenkins;
             if (jenkinsInstance == null)
             {
                 Logger.Log(LogLevel.Normal, "Not inside a Jenkins job, \"View Source\" links will not be changed");
