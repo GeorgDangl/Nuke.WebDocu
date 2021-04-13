@@ -2,8 +2,9 @@
 
 All notable changes to **Nuke.WebDocu** are documented here.
 
-## v2.1.0:
+## v3.0.0:
 - Update NUKE to 5.1.0
+- Drop support for .NET Framework
 
 ## v2.0.0:
 - Update NUKE to 5.0.0
