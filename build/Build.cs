@@ -21,6 +21,7 @@ using static Nuke.GitHub.GitHubTasks;
 using static Nuke.Common.ChangeLog.ChangelogTasks;
 using Nuke.Common.Tools.AzureKeyVault.Attributes;
 using Nuke.Common.IO;
+using Nuke.Common.Tools.Teams;
 
 class Build : NukeBuild
 {
@@ -47,6 +48,7 @@ class Build : NukeBuild
     [KeyVaultSecret] string PublicMyGetApiKey;
     [KeyVaultSecret("NukeWebDocu-DocuApiKey")] string DocuApiKey;
     [KeyVaultSecret] string NuGetApiKey;
+    [KeyVaultSecret] readonly string DanglCiCdTeamsWebhookUrl;
 
     string DocFxFile => RootDirectory / "docfx.json";
 
@@ -54,6 +56,29 @@ class Build : NukeBuild
     AbsolutePath OutputDirectory => RootDirectory / "output";
     AbsolutePath SourceDirectory => RootDirectory / "src";
     AbsolutePath TestsDirectory => RootDirectory / "test";
+
+    protected override void OnTargetFailed(string target)
+    {
+        if (IsServerBuild)
+        {
+            SendTeamsMessage("Build Failed", $"Target {target} failed for Nuke.WebDocu, " +
+                        $"Branch: {GitRepository.Branch}", true);
+        }
+    }
+
+    private void SendTeamsMessage(string title, string message, bool isError)
+    {
+        if (!string.IsNullOrWhiteSpace(DanglCiCdTeamsWebhookUrl))
+        {
+            var themeColor = isError ? "f44336" : "00acc1";
+            TeamsTasks
+                .SendTeamsMessage(m => m
+                    .SetTitle(title)
+                    .SetText(message)
+                    .SetThemeColor(themeColor),
+                    DanglCiCdTeamsWebhookUrl);
+        }
+    }
 
     Target Clean => _ => _
         .Executes(() =>
@@ -67,7 +92,14 @@ class Build : NukeBuild
         .DependsOn(Clean)
         .Executes(() =>
         {
-            DotNetRestore();
+            try
+            {
+                DotNetRestore();
+            }
+            catch
+            {
+                DotNetRestore(x => x.EnableNoCache());
+            }
         });
 
     Target Compile => _ => _
@@ -121,6 +153,8 @@ class Build : NukeBuild
                         .SetTargetPath(x)
                         .SetSource("https://api.nuget.org/v3/index.json")
                         .SetApiKey(NuGetApiKey)));
+
+                SendTeamsMessage("New Release", $"New release available for Nuke.WebDocu: {GitVersion.NuGetVersion}", false);
             }
         });
 
@@ -132,7 +166,7 @@ class Build : NukeBuild
                 .SetNoBuild(true)
                 .SetProjectFile(RootDirectory / "test" / "Nuke.WebDocu.Tests")
                 .SetTestAdapterPath(".")
-                .CombineWith(c => new[] {"netcoreapp3.0", "net472"}
+                .CombineWith(c => new[] {"netcoreapp3.1"}
                     .Select(framework => c.SetFramework(framework).SetLogger($"xunit;LogFilePath={OutputDirectory / $"tests-{framework}.xml"}"))
                 ), degreeOfParallelism: Environment.ProcessorCount, completeOnFailure: true);
         });
