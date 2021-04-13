@@ -166,7 +166,7 @@ class Build : NukeBuild
                 .SetNoBuild(true)
                 .SetProjectFile(RootDirectory / "test" / "Nuke.WebDocu.Tests")
                 .SetTestAdapterPath(".")
-                .CombineWith(c => new[] {"netcoreapp3.0", "net472"}
+                .CombineWith(c => new[] {"netcoreapp3.1"}
                     .Select(framework => c.SetFramework(framework).SetLogger($"xunit;LogFilePath={OutputDirectory / $"tests-{framework}.xml"}"))
                 ), degreeOfParallelism: Environment.ProcessorCount, completeOnFailure: true);
         });
