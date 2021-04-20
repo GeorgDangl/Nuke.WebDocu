@@ -2,6 +2,9 @@
 
 All notable changes to **Nuke.WebDocu** are documented here.
 
+## v3.0.1:
+- Add `AssetFileUpload` method to `WebDocuTasks`
+
 ## v3.0.0:
 - Update NUKE to 5.1.0
 - Drop support for .NET Framework

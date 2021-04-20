@@ -44,6 +44,19 @@ namespace Nuke.WebDocu
                 .Replace(projectName + ".", string.Empty);
         }
 
+        public static void AssetFileUpload(Configure<WebDocuSettings> configurator)
+        {
+            var settings = configurator.InvokeSafe(new WebDocuSettings());
+
+            foreach (var assetFile in settings.AssetFilePaths)
+            {
+                UploadAssetFile(assetFile, settings)
+                        .ConfigureAwait(false)
+                        .GetAwaiter()
+                        .GetResult();
+            }
+        }
+
         static async Task UploadToDanglDocu(string zipPackage, WebDocuSettings settings)
         {
             using (var docsStream = File.OpenRead(zipPackage))
