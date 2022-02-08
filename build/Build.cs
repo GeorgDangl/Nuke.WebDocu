@@ -137,8 +137,9 @@ class Build : NukeBuild
         .Requires(() => Configuration == "Release")
         .Executes(() =>
         {
-            GlobFiles(OutputDirectory, "*.nupkg").NotEmpty()
-                .Where(x => !x.EndsWith("symbols.nupkg"))
+            var packages = GlobFiles(OutputDirectory, "*.nupkg").ToList();
+            Assert.NotEmpty(packages);
+                packages.Where(x => !x.EndsWith("symbols.nupkg"))
                 .ForEach(x => DotNetNuGetPush(s => s
                     .SetTargetPath(x)
                     .SetSource(PublicMyGetSource)
@@ -147,8 +148,7 @@ class Build : NukeBuild
             if (GitVersion.BranchName.Equals("master") || GitVersion.BranchName.Equals("origin/master"))
             {
                 // Stable releases are published to NuGet
-                GlobFiles(OutputDirectory, "*.nupkg").NotEmpty()
-                    .Where(x => !x.EndsWith("symbols.nupkg"))
+                packages.Where(x => !x.EndsWith("symbols.nupkg"))
                     .ForEach(x => DotNetNuGetPush(s => s
                         .SetTargetPath(x)
                         .SetSource("https://api.nuget.org/v3/index.json")
@@ -167,7 +167,7 @@ class Build : NukeBuild
                 .SetProjectFile(RootDirectory / "test" / "Nuke.WebDocu.Tests")
                 .SetTestAdapterPath(".")
                 .CombineWith(c => new[] {"netcoreapp3.1"}
-                    .Select(framework => c.SetFramework(framework).SetLogger($"xunit;LogFilePath={OutputDirectory / $"tests-{framework}.xml"}"))
+                    .Select(framework => c.SetFramework(framework).SetLoggers($"xunit;LogFilePath={OutputDirectory / $"tests-{framework}.xml"}"))
                 ), degreeOfParallelism: Environment.ProcessorCount, completeOnFailure: true);
         });
 
@@ -227,8 +227,11 @@ class Build : NukeBuild
 
             var repositoryInfo = GetGitHubRepositoryInfo(GitRepository);
 
+            var packages = GlobFiles(OutputDirectory, "*.nupkg").ToArray();
+            Assert.NotEmpty(packages);
+
             await PublishRelease(x => x
-                    .SetArtifactPaths(GlobFiles(OutputDirectory, "*.nupkg").NotEmpty().ToArray())
+                    .SetArtifactPaths(packages)
                     .SetCommitSha(GitVersion.Sha)
                     .SetReleaseNotes(completeChangeLog)
                     .SetRepositoryName(repositoryInfo.repositoryName)

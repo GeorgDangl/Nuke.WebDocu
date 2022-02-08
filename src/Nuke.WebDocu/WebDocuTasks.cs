@@ -78,7 +78,7 @@ namespace Nuke.WebDocu
                     if (response.StatusCode == System.Net.HttpStatusCode.Conflict
                         && settings.SkipForVersionConflicts)
                     {
-                        Logger.Normal($"WebDocu return Http status 409 - Conflict. This means that there is likely already an existing" +
+                        Serilog.Log.Debug($"WebDocu return Http status 409 - Conflict. This means that there is likely already an existing" +
                             $" combination of version and project present. The settings are enabled to skip this." +
                             $" Asserts will also not be uploaded.");
                         return;
@@ -99,7 +99,7 @@ namespace Nuke.WebDocu
 
         static async Task UploadAssetFile(string assetFilePath, WebDocuSettings settings)
         {
-            Logger.Normal($"Uploading asset {assetFilePath}");
+            Serilog.Log.Debug($"Uploading asset {assetFilePath}");
 
             if (!await UploadAssetFileViaSas(assetFilePath, settings))
             {
@@ -107,7 +107,7 @@ namespace Nuke.WebDocu
             }
             else
             {
-                Logger.Normal("File was uploaded via direct SAS upload to Azure Blob Storage");
+                Serilog.Log.Debug("File was uploaded via direct SAS upload to Azure Blob Storage");
             }
         }
 
@@ -180,10 +180,10 @@ namespace Nuke.WebDocu
             var jenkinsInstance = Jenkins.Instance as Jenkins;
             if (jenkinsInstance == null)
             {
-                Logger.Log(LogLevel.Normal, "Not inside a Jenkins job, \"View Source\" links will not be changed");
+                Serilog.Log.Write(Serilog.Events.LogEventLevel.Information, "Not inside a Jenkins job, \"View Source\" links will not be changed");
                 return;
             }
-            Logger.Log(LogLevel.Normal, "Inside a Jenkins job, \"View Source\" links will be changed to point to the commit hash");
+            Serilog.Log.Write(Serilog.Events.LogEventLevel.Information, "Inside a Jenkins job, \"View Source\" links will be changed to point to the commit hash");
 
             // In Jenkins, the Git branch is something like "origin/dev", which should
             // only be "dev" to generate correct urls.
