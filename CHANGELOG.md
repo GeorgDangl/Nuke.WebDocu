@@ -2,6 +2,9 @@
 
 All notable changes to **Nuke.WebDocu** are documented here.
 
+## v4.0.0:
+- Update NUKE to 6.0.1
+
 ## v3.0.1:
 - Add `AssetFileUpload` method to `WebDocuTasks`
 
