@@ -135,6 +135,7 @@ class Build : NukeBuild
         .Requires(() => !string.IsNullOrWhiteSpace(PublicMyGetSource))
         .Requires(() => !string.IsNullOrWhiteSpace(PublicMyGetApiKey))
         .Requires(() => Configuration == "Release")
+        .OnlyWhenDynamic(() => IsOnBranch("master") || IsOnBranch("develop"))
         .Executes(() =>
         {
             var packages = GlobFiles(OutputDirectory, "*.nupkg").ToList();
@@ -201,6 +202,7 @@ class Build : NukeBuild
         .DependsOn(BuildDocumentation)
         .Requires(() => !string.IsNullOrWhiteSpace(DocuApiKey))
         .Requires(() => !string.IsNullOrWhiteSpace(DocuBaseUrl))
+        .OnlyWhenDynamic(() => IsOnBranch("master") || IsOnBranch("develop"))
         .Executes(() =>
         {
             var changeLog = GetCompleteChangeLog(ChangeLogFile);
@@ -215,7 +217,7 @@ class Build : NukeBuild
     Target PublishGitHubRelease => _ => _
         .DependsOn(Pack)
         .Requires(() => !string.IsNullOrWhiteSpace(GitHubAuthenticationToken))
-        .OnlyWhenDynamic(() => GitVersion.BranchName.Equals("master") || GitVersion.BranchName.Equals("origin/master"))
+        .OnlyWhenDynamic(() => IsOnBranch("master"))
         .Executes(async () =>
         {
             var releaseTag = $"v{GitVersion.MajorMinorPatch}";
@@ -240,4 +242,9 @@ class Build : NukeBuild
                     .SetToken(GitHubAuthenticationToken)
                 );
         });
+
+    private bool IsOnBranch(string branchName)
+    {
+        return GitVersion.BranchName.Equals(branchName) || GitVersion.BranchName.Equals($"origin/{branchName}");
+    }
 }
