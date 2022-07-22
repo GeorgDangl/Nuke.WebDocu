@@ -2,6 +2,9 @@
 
 All notable changes to **Nuke.WebDocu** are documented here.
 
+## v4.0.1:
+- Update Azure Storage dependencies
+
 ## v4.0.0:
 - Update NUKE to 6.0.1
 
