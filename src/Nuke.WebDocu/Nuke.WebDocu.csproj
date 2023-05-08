@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net5.0</TargetFrameworks>
+    <TargetFramework>net7.0</TargetFramework>
     <Description>Deploy to WebDocu with NUKE Build</Description>
     <Authors>Georg Dangl</Authors>
     <Copyright>(c) $([System.DateTime]::Now.Year) Georg Dangl</Copyright>
@@ -14,7 +14,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Nuke.Common" Version="6.1.2" />
+    <PackageReference Include="Nuke.Common" Version="7.0.0" />
     <PackageReference Include="Azure.Storage.Blobs" Version="12.13.0" />
   </ItemGroup>
   

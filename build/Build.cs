@@ -1,54 +1,52 @@
 ﻿using System;
+using System.IO;
 using System.Linq;
 using Nuke.Common;
+using Nuke.Common.Git;
+using Nuke.Common.IO;
+using Nuke.Common.Tooling;
+using Nuke.Common.Tools.AzureKeyVault;
+using Nuke.Common.Tools.DocFX;
+using Nuke.Common.Tools.DotNet;
+using Nuke.Common.Tools.GitVersion;
+using Nuke.Common.Tools.Teams;
+using Nuke.Common.Utilities.Collections;
+using Nuke.GitHub;
+using Nuke.WebDocu;
 using static Nuke.Common.Tools.DotNet.DotNetTasks;
 using static Nuke.Common.IO.FileSystemTasks;
-using static Nuke.Common.IO.PathConstruction;
-using Nuke.Common.Tools.DotNet;
-using Nuke.Common.Utilities.Collections;
-using Nuke.WebDocu;
-using System.IO;
-using Nuke.Common.Git;
-using Nuke.Common.Tools.Xunit;
 using static Nuke.Common.Tools.DocFX.DocFXTasks;
-using Nuke.Common.Tools.DocFX;
-using Nuke.Common.Tools.GitVersion;
-using Nuke.Common.Utilities;
-using Nuke.Common.Tooling;
-using Nuke.GitHub;
 using static Nuke.GitHub.ChangeLogExtensions;
 using static Nuke.GitHub.GitHubTasks;
 using static Nuke.Common.ChangeLog.ChangelogTasks;
-using Nuke.Common.Tools.AzureKeyVault.Attributes;
-using Nuke.Common.IO;
-using Nuke.Common.Tools.Teams;
+using static Nuke.Common.IO.Globbing;
 
 class Build : NukeBuild
 {
     // Console application entry. Also defines the default target.
     public static int Main() => Execute<Build>(x => x.Compile);
 
-    [KeyVaultSettings(
+    [AzureKeyVaultConfiguration(
         BaseUrlParameterName = nameof(KeyVaultBaseUrl),
         ClientIdParameterName = nameof(KeyVaultClientId),
         ClientSecretParameterName = nameof(KeyVaultClientSecret))]
-    readonly KeyVaultSettings KeyVaultSettings;
+    readonly AzureKeyVaultConfiguration KeyVaultSettings;
 
     [Parameter] readonly string Configuration = IsLocalBuild ? "Debug" : "Release";
 
     [Parameter] string KeyVaultBaseUrl;
     [Parameter] string KeyVaultClientId;
     [Parameter] string KeyVaultClientSecret;
-    [GitVersion(Framework = "netcoreapp3.1")] readonly GitVersion GitVersion;
+    [GitVersion(NoFetch = true)] readonly GitVersion GitVersion;
     [GitRepository] readonly GitRepository GitRepository;
 
-    [KeyVaultSecret] string DocuBaseUrl;
-    [KeyVaultSecret] string GitHubAuthenticationToken;
-    [KeyVaultSecret] string PublicMyGetSource;
-    [KeyVaultSecret] string PublicMyGetApiKey;
-    [KeyVaultSecret("NukeWebDocu-DocuApiKey")] string DocuApiKey;
-    [KeyVaultSecret] string NuGetApiKey;
-    [KeyVaultSecret] readonly string DanglCiCdTeamsWebhookUrl;
+    [AzureKeyVaultSecret] string DocuBaseUrl;
+    [AzureKeyVaultSecret] string GitHubAuthenticationToken;
+    [AzureKeyVaultSecret] string PublicMyGetSource;
+    [AzureKeyVaultSecret] string PublicMyGetApiKey;
+    [AzureKeyVaultSecret("NukeWebDocu-DocuApiKey")] string DocuApiKey;
+    [AzureKeyVaultSecret] string NuGetApiKey;
+    [AzureKeyVaultSecret] readonly string DanglCiCdTeamsWebhookUrl;
 
     string DocFxFile => RootDirectory / "docfx.json";
 
@@ -83,9 +81,9 @@ class Build : NukeBuild
     Target Clean => _ => _
         .Executes(() =>
         {
-            SourceDirectory.GlobDirectories("**/bin", "**/obj").ForEach(DeleteDirectory);
-            TestsDirectory.GlobDirectories("**/bin", "**/obj").ForEach(DeleteDirectory);
-            EnsureCleanDirectory(OutputDirectory);
+            SourceDirectory.GlobDirectories("**/bin", "**/obj").DeleteDirectories();
+            TestsDirectory.GlobDirectories("**/bin", "**/obj").DeleteDirectories();
+            OutputDirectory.CreateOrCleanDirectory();
         });
 
     Target Restore => _ => _
@@ -119,7 +117,7 @@ class Build : NukeBuild
         .Executes(() =>
         {
             var changeLog = GetCompleteChangeLog(ChangeLogFile)
-                .EscapeStringPropertyForMsBuild();
+                 .EscapeStringPropertyForMsBuild();
 
             DotNetPack(x => x
                 .SetConfiguration(Configuration)

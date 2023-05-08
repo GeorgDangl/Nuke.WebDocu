@@ -1,18 +1,20 @@
-﻿using Nuke.Common.Tooling;
-using System;
+﻿using System;
 using System.IO;
 using System.IO.Compression;
-using System.Net.Http;
-using System.Threading.Tasks;
-using Nuke.Common;
-using static Nuke.Common.IO.PathConstruction;
 using System.Linq;
-using Nuke.Common.CI.Jenkins;
-using System.Web;
-using Newtonsoft.Json;
+using System.Net;
+using System.Net.Http;
 using System.Text;
-using Newtonsoft.Json.Linq;
+using System.Threading.Tasks;
+using System.Web;
 using Azure.Storage.Blobs;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using Nuke.Common.CI.Jenkins;
+using Nuke.Common.Tooling;
+using Serilog;
+using Serilog.Events;
+using static Nuke.Common.IO.Globbing;
 
 namespace Nuke.WebDocu
 {
@@ -75,12 +77,12 @@ namespace Nuke.WebDocu
                 var response = await new HttpClient().SendAsync(request);
                 if (!response.IsSuccessStatusCode)
                 {
-                    if (response.StatusCode == System.Net.HttpStatusCode.Conflict
+                    if (response.StatusCode == HttpStatusCode.Conflict
                         && settings.SkipForVersionConflicts)
                     {
-                        Serilog.Log.Debug($"WebDocu return Http status 409 - Conflict. This means that there is likely already an existing" +
-                            $" combination of version and project present. The settings are enabled to skip this." +
-                            $" Asserts will also not be uploaded.");
+                        Log.Debug($"WebDocu return Http status 409 - Conflict. This means that there is likely already an existing" +
+                                  $" combination of version and project present. The settings are enabled to skip this." +
+                                  $" Asserts will also not be uploaded.");
                         return;
                     }
 
@@ -99,7 +101,7 @@ namespace Nuke.WebDocu
 
         static async Task UploadAssetFile(string assetFilePath, WebDocuSettings settings)
         {
-            Serilog.Log.Debug($"Uploading asset {assetFilePath}");
+            Log.Debug($"Uploading asset {assetFilePath}");
 
             if (!await UploadAssetFileViaSas(assetFilePath, settings))
             {
@@ -107,7 +109,7 @@ namespace Nuke.WebDocu
             }
             else
             {
-                Serilog.Log.Debug("File was uploaded via direct SAS upload to Azure Blob Storage");
+                Log.Debug("File was uploaded via direct SAS upload to Azure Blob Storage");
             }
         }
 
@@ -180,10 +182,10 @@ namespace Nuke.WebDocu
             var jenkinsInstance = Jenkins.Instance as Jenkins;
             if (jenkinsInstance == null)
             {
-                Serilog.Log.Write(Serilog.Events.LogEventLevel.Information, "Not inside a Jenkins job, \"View Source\" links will not be changed");
+                Log.Write(LogEventLevel.Information, "Not inside a Jenkins job, \"View Source\" links will not be changed");
                 return;
             }
-            Serilog.Log.Write(Serilog.Events.LogEventLevel.Information, "Inside a Jenkins job, \"View Source\" links will be changed to point to the commit hash");
+            Log.Write(LogEventLevel.Information, "Inside a Jenkins job, \"View Source\" links will be changed to point to the commit hash");
 
             // In Jenkins, the Git branch is something like "origin/dev", which should
             // only be "dev" to generate correct urls.
