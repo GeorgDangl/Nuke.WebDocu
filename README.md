@@ -1,3 +1,5 @@
+> **Archival Information**: This repository is archived, it was moved as a sub project into https://github.com/GeorgDangl/Nuke.GitHub
+
 # Nuke.WebDocu
 
 [![Build Status](https://jenkins.dangl.me/buildStatus/icon?job=GeorgDangl%2FNuke.WebDocu%2Fdevelop)](https://jenkins.dangl.me/job/GeorgDangl/job/Nuke.WebDocu/job/develop/)
